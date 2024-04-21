@@ -6,6 +6,7 @@ module.exports=buildSchema(`
     name:String!
     email:String!
     id:String!
+    token:String!
   }
   input userInputData {
     name:String!
@@ -14,9 +15,18 @@ module.exports=buildSchema(`
     confirmPassword:String!
     avatar:String
   }
+  input userUpdateInput{
+    email:String,
+    name:String,
+    password:String
+  }
   type rootMutation {
     signup(userInput:userInputData):user!
     login(email:String!,password:String!):user!
+    edit(userId:String!,updates:userUpdateInput!):user!
+    forgetPassword(userId:String!,email:String!):String!
+    resetPassword(email:String!,newPassword:String!):user!
+    checkVerification(email:String!,code:String!):Boolean!
   }
   type rootQuery{
     name:String!

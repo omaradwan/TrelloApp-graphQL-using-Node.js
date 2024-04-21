@@ -10,11 +10,16 @@ const boardSchema=new mongoose.Schema({
         type:String,
     },
     list:[{type:String,ref:"List"}],
-    userWithRoles:{
-        type:Map,
-        of:String,
-        index:true
-    },
+    userWithRoles: [{
+        userId: {
+          type: String,
+          required: true
+        },
+        role: {
+          type: String,
+          required: true
+        }
+      }],
     creator:{
         type:String,ref:"User",
         required:true

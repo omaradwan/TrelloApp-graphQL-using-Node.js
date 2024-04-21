@@ -20,7 +20,7 @@ const userSchema=new mongoose.Schema({
    avatar:{
     type:String
    },
-   resetPasswordLink:{
+   verificationCode:{
     type:String
    },
    expiryDate:{
