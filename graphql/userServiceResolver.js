@@ -2,6 +2,7 @@ const workSpace=require("../models/workSpace")
 const User=require("../models/user")
 const Board=require("../models/board")
 const validator=require("validator")
+const board = require("../models/board")
 module.exports={
 
     createWorkSpace: async function({userData},req){
@@ -95,6 +96,57 @@ module.exports={
         await WS.save()
         return{...WS._doc}      
     },
+    addUser:async function(data,req){
+       const{userId,workSpaceId}=data;
+       if(!userId||!workSpaceId){
+        throw new Error("Error")
+       }
+       if(!req.isAuth){
+        throw new Error("not authinticated")
+       }
+       const isAdmin=req.userId;
+       const WS=await workSpace.findOne({_id:workSpaceId})
+       if(!WS){
+        throw new Error("no workspace found")
+       }
+       if(!WS.admins.includes(isAdmin)){
+        const error=new Error("Only admins can make this functionality!")
+        error.code=401;
+        throw error
+    }
+       if(WS.members.includes(userId)){
+        throw new Error("user is already in workspace")
+       }
+       WS.members.push(userId);
+       await WS.save();
+       return{...WS._doc}  
+    },
+    removeUser:async function(data,req){
+        const{userId,workSpaceId}=data;
+        if(!userId||!workSpaceId){
+         throw new Error("Error")
+        }
+        if(!req.isAuth){
+         throw new Error("not authinticated")
+        }
+        const isAdmin=req.userId;
+       
+        const WS=await workSpace.updateOne(
+            {
+            _id:workSpaceId,
+            admins:isAdmin
+            },
+            { $pull: { members:userId, admins:userId} },
+            {new:true}
+        )
+        if(!WS){
+            const error=new Error("operation failed")
+            error.code=400;
+            throw error;
+        }
+        const user=await User.findOne({_id:userId});
+        return`${user.name} removed successfully` 
+    },
     getMembers:async function({workSpaceId},req){
         if(!req.isAuth){
             throw new Error("not authinticated")
@@ -119,12 +171,14 @@ module.exports={
         const userId=req.userId
        
         const WS=await workSpace.findOne({_id:workSpaceId})
+    
         if(!WS){
             throw new Error("cannot find workspace with this Id")
         }
         if(!WS.admins.includes(userId)){
             throw new Error("Only admins can add boards")
         }
+
         const newBoard=new Board({
             title,
             description,
@@ -134,9 +188,32 @@ module.exports={
             invitationLink,
             expiryDate
         })
+        
+
         const isSaved=await newBoard.save();
+        WS.boards.push(newBoard._id.toString());
+        await WS.save();
         return{...WS._doc,...isSaved._doc}
-    }
+    },
+    getBoards:async function({workSpaceId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        const WS=await workSpace.findOne({_id:workSpaceId}).populate("boards");
+       
+        if(!WS){
+            throw new Error("no workSpace with this Id")
+        }
+        const userId=req.userId;
+        if(!WS.members.includes(userId)){
+            throw new Error("user is not in this workSpace")
+        }
+        const boards=WS.boards;
+        if(!boards){
+            throw new Error("no boards in the work space")
+        }
+        return boards;
+    },
 
 }
 

@@ -32,7 +32,7 @@ module.exports=buildSchema(`
   
   
   type board{
-    workSpace:workSpace!
+    workSpace:workSpace
     title:String!
     creator:String!
   }
@@ -40,6 +40,9 @@ module.exports=buildSchema(`
   type rootMutation{
     createWorkSpace(userData:userInputData!):workSpace!
     addAdmin(workSpaceId:String!,userTobeAdded:String!):workSpace!
+    addUser(userId:String!,workSpaceId:String!):workSpace!
+    removeUser(userId:String!,workSpaceId:String!):String!
+
      
     createBoard(workSpaceId:String!,userData:InputDataBoard!):board!
     
@@ -47,6 +50,8 @@ module.exports=buildSchema(`
   type rootQuery{
     getWorkSpace(id:String!):workSpace!
     getMembers(workSpaceId:String!):workSpace!
+    getBoards(workSpaceId:String!):[board!]!
+
   }
   schema{
     query:rootQuery
