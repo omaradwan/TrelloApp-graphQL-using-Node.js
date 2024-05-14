@@ -3,6 +3,8 @@ const User=require("../models/user")
 const Board=require("../models/board")
 const validator=require("validator")
 const board = require("../models/board")
+const helpers=require("../middlewar/helper")
+const uuid=require("uuid")
 module.exports={
 
     createWorkSpace: async function({userData},req){
@@ -214,6 +216,64 @@ module.exports={
         }
         return boards;
     },
+    inviteUser:async function({email,workSpaceId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        const userId=req.userId;
+        const WS=await workSpace.findOne({_id:workSpaceId});
+        if(!WS){
+            throw new Error("no workspace found with this id");
+        }
+        if(!WS.admins.includes(userId)){
+            const error=new Error("Only admins can invite users");
+            error.code=401;
+            throw error;
+        }
+        const uuidv = uuid.v4();
+
+        const link = `https:test.com/invitation/${WS.title}/${uuidv}`;
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 7);
+        WS.invitationLink=link;
+        WS.expiryDate=expirationDate;
+        await WS.save();
+        var obj={};
+        obj.subject="Invitation to workspace"
+        obj.text=`the invitation link is ${link}`
+
+        helpers.sendConfirmationEmail(email,obj);
+        return "invitation has sent successfully"
+    },
+    receiveInvitaion:async function({userId,link},req){
+        if(!link){
+            throw new Error("link must be provided");
+        }
+        const WS=await workSpace.findOne({invitationLink:link});
+        if(!WS){
+            throw new Error("the link is not correct or not found workspace");
+        }
+        const currentDate=new Date();
+        if(currentDate>WS.expiryDate){
+            const error=new Error("sorry but the link has been expired");
+            error.code=400;
+            throw error;
+        }
+      
+        if(!userId){
+            throw new Error("userId must be provided");
+        }
+        const haveAccount=await User.findOne({_id:userId});
+        if(!haveAccount){
+            return{success:false,message:"you must have an account first"};
+        }
+        if(WS.members.includes(userId)){
+            throw new Error("user is already in this workspace");
+        }
+        WS.members.push(userId);
+        await WS.save();
+        return{success:true,message:"",workSpace:WS};
+    }
 
 }
 

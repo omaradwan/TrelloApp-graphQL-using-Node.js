@@ -8,7 +8,7 @@ const workSpaceSchema=new mongoose.Schema({
     },
     members:[{type:String,ref:"User"}],
     boards:[
-        {type:String,ref:"Board",index:true,required:true},
+        {type:String,ref:"Board",index:true},
     ],
     admins:[{type:String,ref:"User"}],
     creator:{

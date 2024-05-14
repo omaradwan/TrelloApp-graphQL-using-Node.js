@@ -36,12 +36,20 @@ module.exports=buildSchema(`
     title:String!
     creator:String!
   }
+  type InviteResponse{
+    success: Boolean!
+    message: String
+    workSpace:workSpace
+  }
   
   type rootMutation{
+    
     createWorkSpace(userData:userInputData!):workSpace!
     addAdmin(workSpaceId:String!,userTobeAdded:String!):workSpace!
     addUser(userId:String!,workSpaceId:String!):workSpace!
     removeUser(userId:String!,workSpaceId:String!):String!
+    inviteUser(email:String!,workSpaceId:String!):String!
+    receiveInvitaion(userId:String!,link:String!):InviteResponse!
 
      
     createBoard(workSpaceId:String!,userData:InputDataBoard!):board!
