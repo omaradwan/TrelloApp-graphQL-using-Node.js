@@ -29,6 +29,12 @@ module.exports=buildSchema(`
     userId: String!
     role: String!
   }
+  input listData{
+    title:String!
+    tasks:[String!]
+    transition:[String!]
+    allowedRoles:[String!]
+  }
   
   
   type board{
@@ -40,6 +46,10 @@ module.exports=buildSchema(`
     success: Boolean!
     message: String
     workSpace:workSpace
+  }
+  type list{
+    title: String!
+    allowedRoles: [String]
   }
   
   type rootMutation{
@@ -53,12 +63,14 @@ module.exports=buildSchema(`
 
      
     createBoard(workSpaceId:String!,userData:InputDataBoard!):board!
+    createList(inputInfo:listData,workSpaceId:String!,boardId:String):list
     
   }
   type rootQuery{
     getWorkSpace(id:String!):workSpace!
     getMembers(workSpaceId:String!):workSpace!
     getBoards(workSpaceId:String!):[board!]!
+    getAllWorkSpaces(id:String!):[workSpace!]!
 
   }
   schema{

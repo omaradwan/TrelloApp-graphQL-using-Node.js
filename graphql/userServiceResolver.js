@@ -1,10 +1,11 @@
 const workSpace=require("../models/workSpace")
 const User=require("../models/user")
 const Board=require("../models/board")
+const List=require("../models/list")
 const validator=require("validator")
-const board = require("../models/board")
 const helpers=require("../middlewar/helper")
 const uuid=require("uuid")
+const list = require("../models/list")
 module.exports={
 
     createWorkSpace: async function({userData},req){
@@ -273,7 +274,73 @@ module.exports={
         WS.members.push(userId);
         await WS.save();
         return{success:true,message:"",workSpace:WS};
+    },
+    getAllWorkSpaces:async function({id},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+
+        const userId=id;
+        const checkUser=await User.findOne({_id:userId});
+        if(!checkUser){
+            throw new Error("User have to sign up first")
+        }
+        if(!userId){
+            throw new Error("userId is required");
+        }
+        const WS=await workSpace.find({
+            members:{$in:[userId]}
+        })
+        if(!WS){
+            throw new Error("no workSpaces found")
+        }
+      //  console.log(WS)
+        return WS
+    },
+    createList:async function({inputInfo,workSpaceId,boardId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        const userId=req.userId;
+        const WS=await workSpace.findOne({_id:workSpaceId}).populate("boards");
+        if(!WS){
+            throw new Error("can not found workSpace with this id")
+        }
+        if(!WS.boards.some(it=>it._id==boardId)){
+            const error=new Error("invalid boardId or this board not in this workspace")
+            error.code=400;
+            throw error;
+        }
+        if(!WS.admins.includes(userId)){
+            throw new Error("Only admins can add lists")
+        }
+        const {title,tasks,transition,creator,allowedRoles}=inputInfo;
+
+        const newList=new List({
+            title,
+            tasks,
+            transition,
+            creator:userId,
+            allowedRoles
+        })
+        await newList.save();
+        const board=await Board.findOneAndUpdate(
+            {
+                _id:boardId
+            },
+            {
+                $push:{list:newList._id}
+            },
+            {
+                new:true
+            }
+        )
+        await board.save();
+        return{...newList._doc};
+      
+        
     }
+
 
 }
 
