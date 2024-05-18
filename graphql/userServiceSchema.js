@@ -20,8 +20,7 @@ module.exports=buildSchema(`
     title: String!
     description: [String!]
     list: [String!]
-    userWithRoles: [UserWithRoleInput!]!
-    creator: String!
+    userWithRoles: [UserWithRoleInput!]!  
     invitationLink: String
     expiryDate: String
   }
@@ -36,40 +35,57 @@ module.exports=buildSchema(`
     allowedRoles:[String!]
   }
   
-  
-  type board{
-    workSpace:workSpace
-    title:String!
-    creator:String!
-  }
   type InviteResponse{
     success: Boolean!
     message: String
     workSpace:workSpace
   }
+
+
+ 
+  type listRes{
+    List:list
+    res:Res!
+  }
   type list{
     title: String!
     allowedRoles: [String]
   }
+
+  type boardRes{
+    Board:[board]
+    res:Res!
+  }
+  type board{
+    title:String!
+    creator:String!
+  }
+  type Res{
+    err:[String]!
+    status:String!
+  }
+
   
   type rootMutation{
     
     createWorkSpace(userData:userInputData!):workSpace!
+
     addAdmin(workSpaceId:String!,userTobeAdded:String!):workSpace!
     addUser(userId:String!,workSpaceId:String!):workSpace!
     removeUser(userId:String!,workSpaceId:String!):String!
     inviteUser(email:String!,workSpaceId:String!):String!
+    
     receiveInvitaion(userId:String!,link:String!):InviteResponse!
 
      
-    createBoard(workSpaceId:String!,userData:InputDataBoard!):board!
-    createList(inputInfo:listData,workSpaceId:String!,boardId:String):list
+    createBoard(workSpaceId:String!,userData:InputDataBoard!):boardRes!
+    createList(inputInfo:listData,workSpaceId:String!,boardId:String):listRes!
     
   }
   type rootQuery{
     getWorkSpace(id:String!):workSpace!
     getMembers(workSpaceId:String!):workSpace!
-    getBoards(workSpaceId:String!):[board!]!
+    getBoards(workSpaceId:String!):boardRes!
     getAllWorkSpaces(id:String!):[workSpace!]!
 
   }

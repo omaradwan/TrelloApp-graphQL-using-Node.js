@@ -4,7 +4,7 @@ const listSchema=new mongoose.Schema({
     title:{
         type:String,
         required:true,
-        unique:true
+        unique:false
     },
     task:[{type:String,ref:"Task"}],
     transition:[{type:String,ref:"List"}],

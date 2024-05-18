@@ -170,6 +170,11 @@ module.exports={
         if(!req.isAuth){
             throw new Error("not authinticated")
         }
+        
+        let res={
+            err:[],
+            status:"Successfull"
+        }
         const{title,description,list,userWithRoles,creator,invitationLink,expiryDate}=userData
         const userId=req.userId
        
@@ -181,29 +186,36 @@ module.exports={
         if(!WS.admins.includes(userId)){
             throw new Error("Only admins can add boards")
         }
-
+       
+        if(await Board.findOne({title:title})){
+            console.log("in")
+            res.err.push("there is already board with this name")
+            res.status="failed";
+            return {res};
+        }
+      
         const newBoard=new Board({
             title,
             description,
             list,
             userWithRoles,
-            creator,
+            creator:userId,
             invitationLink,
             expiryDate
         })
         
 
-        const isSaved=await newBoard.save();
+        const board=await newBoard.save();
         WS.boards.push(newBoard._id.toString());
         await WS.save();
-        return{...WS._doc,...isSaved._doc}
+        return{Board:[board],res};
     },
     getBoards:async function({workSpaceId},req){
         if(!req.isAuth){
             throw new Error("not authinticated")
         }
         const WS=await workSpace.findOne({_id:workSpaceId}).populate("boards");
-       
+        let res={err:[],status:"Successfull"}
         if(!WS){
             throw new Error("no workSpace with this Id")
         }
@@ -213,9 +225,12 @@ module.exports={
         }
         const boards=WS.boards;
         if(!boards){
-            throw new Error("no boards in the work space")
+            res.err.push("no boards in the work space")
+            res.status="Failed"
+            return {res};
+          //  throw new Error("no boards in the work space")
         }
-        return boards;
+        return {Board:boards,res};
     },
     inviteUser:async function({email,workSpaceId},req){
         if(!req.isAuth){
@@ -301,21 +316,34 @@ module.exports={
         if(!req.isAuth){
             throw new Error("not authinticated")
         }
+
+        let res={err:[],status:"Successfull"}
+        const {title,tasks,transition,allowedRoles}=inputInfo;
         const userId=req.userId;
-        const WS=await workSpace.findOne({_id:workSpaceId}).populate("boards");
+        const WS=await workSpace.findOne({_id:workSpaceId}).populate("boards")
         if(!WS){
-            throw new Error("can not found workSpace with this id")
+            res.err.push("can not found workSpace with this id")
+            res.status="Failed"
+            return {res}
         }
         if(!WS.boards.some(it=>it._id==boardId)){
             const error=new Error("invalid boardId or this board not in this workspace")
             error.code=400;
             throw error;
         }
-        if(!WS.admins.includes(userId)){
-            throw new Error("Only admins can add lists")
+        const wantedBoard = await Board.findById(boardId).populate('list', 'title');
+        if(wantedBoard.list.filter(it=>it.title==title)){
+            res.err.push("There is already a list with this name")
+            res.status="Failed"
+         
+            return {res}
         }
-        const {title,tasks,transition,creator,allowedRoles}=inputInfo;
-
+        if(!WS.admins.includes(userId)){
+            res.err.push("Only admins can add lists")
+            res.status="Failed"
+            return {res}
+        }
+       
         const newList=new List({
             title,
             tasks,
@@ -336,9 +364,8 @@ module.exports={
             }
         )
         await board.save();
-        return{...newList._doc};
-      
-        
+        return{List:newList,res};
+       
     }
 
 
