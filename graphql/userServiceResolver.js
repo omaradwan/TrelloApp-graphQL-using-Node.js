@@ -2,6 +2,7 @@ const workSpace=require("../models/workSpace")
 const User=require("../models/user")
 const Board=require("../models/board")
 const List=require("../models/list")
+const Task=require("../models/task")
 const validator=require("validator")
 const helpers=require("../middlewar/helper")
 const uuid=require("uuid")
@@ -332,7 +333,8 @@ module.exports={
             throw error;
         }
         const wantedBoard = await Board.findById(boardId).populate('list', 'title');
-        if(wantedBoard.list.filter(it=>it.title==title)){
+        console.log(wantedBoard.list)
+        if(wantedBoard.list.filter(it=>it.title==title).length>=1){
             res.err.push("There is already a list with this name")
             res.status="Failed"
          
@@ -366,8 +368,137 @@ module.exports={
         await board.save();
         return{List:newList,res};
        
-    }
+    },
+    deleteBoard:async function({workSpaceId,boardId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let userId=req.userId;
+        let res={err:[],status:"Successfull"}
+        const WS=await workSpace.findOne({ _id:workSpaceId,boards:{$in:boardId},admins:{$in:userId}})
+        if(!WS){
+            res.err.push("cannot find workspace or user not an admin in this workspace or no board found")
+            res.status="Failed"
+            return {res}
+        }
+        const board=await Board.findById(boardId).select("list");
+        if(!board){
+            res.err.push("no board found");
+            res.status="Failed";
+            return {res};
+        }
+        //console.log(board);
+        try{
+        await List.deleteMany({_id:{$in:board.list}})
+        await Board.findByIdAndDelete(boardId);
+        let indexToremove=WS.boards.indexOf(boardId);
+        if(indexToremove!==-1){
+            WS.boards.splice(indexToremove, 1);
+        }
+        await WS.save();
+        return {res};
+        }catch(err){
+            console.log(err);
+        } 
+    },
+    editBoard:async function({workSpaceId,boardId,userData},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        const userId=req.userId;
+        const WS=await workSpace.findOne({ _id:workSpaceId,boards:{$in:boardId},admins:{$in:userId}}).populate("boards");
+        if(!WS){
+            res.err.push("cannot find workspace or user not an admin in this workspace or no board found")
+            res.status="Failed"
+            return {res}
+        }
+        const board=WS.boards.find(board=>board._id==boardId);
+        const {title,userWithRoles}=userData;
+      //  console.log(board)
+        if(title)board.title=title;
+        if(userWithRoles){
+            // lsa 3ayz a tcheck lw hupdate user kan mwgod aslan w mknsh user gded
+            userWithRoles.forEach(obj => {
+                let newUser=obj;
+              //  console.log(obj)
+                board.userWithRoles.push(newUser);
+            });
+        }
+        await board.save();
+        return {Board:[board],res}
+    },
+    editList:async function({boardId,listId,userData},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        const board=await Board.findOne({_id:boardId,list:{$in:listId}}).populate("list");
+        if(!board){
+            res.err.push("invalid boardId or listId not in this board")
+            res.status="Failed"
+            return {res}
+        }
+        let userId=req.userId;
+        const checkAdmin=await workSpace.findOne({boards:{$in:boardId},admins:{$in:userId}})
+        if(!checkAdmin){
+            res.err.push("Only admins can edit list")
+            res.status="Failed"
+            return {res}
+        }
+        const {title,task,transition,allowedRoles}=userData;
+        let listToUpdate=board.list.find(it=>it._id==listId);
+        if(title){
+            listToUpdate.title=title;
+        }
+        if(task){
+            listToUpdate.task.push(...task)
+        }
+        if(transition){
+            listToUpdate.transition.push(...transition)
+        }
+        if(allowedRoles){
+            listToUpdate.task.push(...allowedRoles)
+        }
+        await listToUpdate.save();
+        return{List:listToUpdate,res};
+    },
+    deleteList:async function({boardId,listId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        let userId=req.userId;
+        const checkAdmin=await workSpace.findOne({boards:{$in:boardId},admins:{$in:userId}})
+        if(!checkAdmin){
+            res.err.push("Only admins can delete list")
+            res.status="Failed"
+            return {res}
+        }
+        const list=await List.findById(listId).populate("task")
+        if(!list){
+            res.err.push("No list found with this id")
+            res.status="Failed"
+            return {res}
+        }
+        try{
+            await Task.deleteMany({_id:{$in:list.task}})
+            await Board.findByIdAndUpdate({
+                _id:boardId
+            },
+            {
+                $pull:{list:listId}
+            },
+            {
+                new:true
+            })
+            await List.deleteOne({_id:listId})
+            return {res}
+        }catch(err){
+            console.log(err)
+        }
 
+    }
 
 }
 
