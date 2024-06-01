@@ -72,6 +72,27 @@ module.exports=buildSchema(`
     title:String!
     creator:String!
   }
+
+
+  input InputDataTask{
+    title:String!
+    description:String!
+    curList:String!
+    assignedUsers:[String!]
+    deadline:String!
+  }
+  type taskRes{
+    Task:task
+    res:Res!
+  }
+  type task{
+    title:String!
+    description:String
+    curList:String!
+    assignedUsers:[String!]
+    deadline:String!
+  }
+
   type Res{
     err:[String]!
     status:String!
@@ -97,6 +118,8 @@ module.exports=buildSchema(`
     createList(inputInfo:listData,workSpaceId:String!,boardId:String):listRes!
     editList(boardId:String!,listId:String!,userData:editDataList!):listRes!
     deleteList(boardId:String!,listId:String!):listRes!
+
+    addTask(boardId:String!,listId:String!,userData:InputDataTask):taskRes!
     
   }
   type rootQuery{

@@ -497,8 +497,65 @@ module.exports={
         }catch(err){
             console.log(err)
         }
+    },
+    addTask:async function({boardId,listId,userData},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        let userId=req.userId;
+         
+        // get workSpace that in this board to check if user admin or not
+        const WS=await workSpace.findOne({boards:{$in:boardId},admins:{$in:userId}}).populate("boards","userWithRoles");
+        let checkAdmin=WS.admins.includes(userId)
+        if(!checkAdmin){
+            res.err.push("Only admins can add tasks");
+            res.status="Failed";
+            return {res};
+        }
+        let {title,description,curList,assignedUsers,deadline}=userData;
+        const isDuplicate=await Task.findOne({title:title});
+        if(isDuplicate){
+            res.err.push("There is already a task with this title");
+            res.status="Failed";
+            return {res};
+        }
+        // console.log(WS.boards)
+        
+        
+        // aallUserWithRoles in array of object contains userWithRoles attributes
+        const allUserWithRoles = WS.boards.flatMap(board => board.userWithRoles || []);
+      //  console.log(allUserWithRoles)
+        assignedUsers = assignedUsers.filter(userId =>
+            allUserWithRoles.some(user => user.userId === userId)
+        );
+
+        const newTask= new Task({
+            title,
+            description,
+            curList,
+            assignedUsers,
+            deadline:new Date(deadline)
+        }) 
+       
+        let savedTask=await newTask.save();
+        const addToList=await List.findOneAndUpdate(
+        {
+            _id:listId
+        },
+        {
+            $push:{task:savedTask._id}
+        },
+        {
+            new:true
+        }
+    )
+        
+       // still need to remind users
+       return {Task:savedTask,res}
 
     }
+    
 
 }
 

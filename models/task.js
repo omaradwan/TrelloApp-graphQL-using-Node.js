@@ -9,9 +9,9 @@ const taskSchema=new mongoose.Schema({
         type:String,
     },
     curList:{type:String,ref:"List"},
-    assignedUsers:{
+    assignedUsers:[{
         type:String,ref:"User"
-    },
+    }],
     deadline:{type:Date}
 },{
     timestamps:true
