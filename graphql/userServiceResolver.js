@@ -514,7 +514,15 @@ module.exports={
             return {res};
         }
         let {title,description,curList,assignedUsers,deadline}=userData;
-        const isDuplicate=await Task.findOne({title:title});
+
+        const board=await Board.findOne({_id:boardId}).populate("list","title");
+        //console.log(board.list);
+     
+       let isDuplicate=true;
+       isDuplicate=board.list.map(it=>{
+            if(it.title==title)return false;
+        })
+
         if(isDuplicate){
             res.err.push("There is already a task with this title");
             res.status="Failed";
@@ -523,6 +531,7 @@ module.exports={
         // console.log(WS.boards)
         
         
+        // check if assignedUsers are in this workspace
         // aallUserWithRoles in array of object contains userWithRoles attributes
         const allUserWithRoles = WS.boards.flatMap(board => board.userWithRoles || []);
       //  console.log(allUserWithRoles)
@@ -554,6 +563,88 @@ module.exports={
        // still need to remind users
        return {Task:savedTask,res}
 
+    },
+    editTask:async function({listId,taskId,userData},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        let userId=req.userId;
+
+        //first getboard to get from it thw workspace to see if the user is admin or not
+        let board;
+        try{
+         board=await Board.find({list:{$in:listId}});
+        }catch(err){
+            console.log(err);
+        }
+        const WS=await workSpace.find({boards:{$in:board._id},admins:{$in:userId}});
+        if(!WS){
+            res.err.push("Only admins can edit tasks");
+            res.status="failed";
+            return{res};
+        }
+
+        //no edit occurs
+        if(!userData){
+            return{res};
+        }
+        const{assignedUsers,toGoList,deadline}=userData;
+
+        if(!await List.findOne({_id:listId,task:{$in:taskId}})){
+            res.err.push("this task not in the listId parameter");
+            res.status="failed";
+            return{res};
+        }
+        let updateFields = {};
+        if(assignedUsers){
+           updateFields.$push= { assignedUsers: assignedUsers }
+        }
+        
+        // check if this task valid to go to this list
+        let oldList
+        if(toGoList&&listId!=toGoList){
+             oldList=await List.findOne({_id:listId,transition:{$in:toGoList}})
+             if(!oldList){
+                res.err.push("can not go to this list rightNow");
+                res.status="failed";
+                return{res};
+             }
+             else{
+               updateFields.curList=toGoList;
+             }
+        }
+        if(deadline){updateFields.deadline=deadline}
+        
+        console.log(updateFields)
+        let updatedTask=await Task.findOneAndUpdate(
+            {
+                _id:taskId
+            },
+            updateFields,
+            {new:true}
+        )
+
+        // remove the task from the old list and put it in the new list
+        if(toGoList){
+           
+            const taskIndex=oldList.task.indexOf(taskId);
+            if(taskIndex!==-1){
+                oldList.task.splice(taskIndex, 1);
+            }
+            await oldList.save();
+            
+            const newList=await List.findOneAndUpdate(
+                {
+                    _id:toGoList
+                },
+                {
+                    $push:{task:taskId}
+                },
+                {new:true}
+            )
+        }     
+        return{Task:updatedTask,res}; 
     }
     
 

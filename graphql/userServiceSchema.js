@@ -81,6 +81,11 @@ module.exports=buildSchema(`
     assignedUsers:[String!]
     deadline:String!
   }
+  input editDataTask{
+    toGoList:String
+    assignedUsers:[String!]
+    deadline:String
+  }
   type taskRes{
     Task:task
     res:Res!
@@ -120,6 +125,7 @@ module.exports=buildSchema(`
     deleteList(boardId:String!,listId:String!):listRes!
 
     addTask(boardId:String!,listId:String!,userData:InputDataTask):taskRes!
+    editTask(listId:String!,taskId:String!,userData:editDataTask):taskRes!
     
   }
   type rootQuery{
