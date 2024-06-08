@@ -513,21 +513,35 @@ module.exports={
             res.status="Failed";
             return {res};
         }
-        let {title,description,curList,assignedUsers,deadline}=userData;
 
-        const board=await Board.findOne({_id:boardId}).populate("list","title");
-        //console.log(board.list);
-     
-       let isDuplicate=true;
-       isDuplicate=board.list.map(it=>{
-            if(it.title==title)return false;
-        })
-
-        if(isDuplicate){
-            res.err.push("There is already a task with this title");
+        const checkList=await List.findById(listId);
+        if(!checkList){
+            res.err.push("no List found with this Id");
             res.status="Failed";
             return {res};
         }
+        let {title,description,assignedUsers,deadline}=userData;
+
+        const board=await Board.findById(boardId,{list:1}).populate({
+            path: "list",
+            select:"task",
+            populate:{
+                path:"task",
+                select:"title"
+            }
+        });
+        //console.log(board.list);
+
+       board.list.forEach(it=>{
+            it.task.forEach(it2=>{
+                //console.log(it2.title,title)
+                if(it2.title==title){
+                    throw new Error("There is alrady a task with this name")
+                };
+            }) 
+          
+        })
+        
         // console.log(WS.boards)
         
         
@@ -542,7 +556,7 @@ module.exports={
         const newTask= new Task({
             title,
             description,
-            curList,
+            curList:listId,
             assignedUsers,
             deadline:new Date(deadline)
         }) 
@@ -645,6 +659,48 @@ module.exports={
             )
         }     
         return{Task:updatedTask,res}; 
+    },
+    deleteTask:async function({listId,taskId},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        let userId=req.userId;
+
+        //first getboard to get from it thw workspace to see if the user is admin or not
+        let board;
+        try{
+         board=await Board.find({list:{$in:listId}});
+        }catch(err){
+            console.log(err);
+        }
+        const WS=await workSpace.find({boards:{$in:board._id},admins:{$in:userId}});
+        if(!WS){
+            res.err.push("Only admins can delete tasks");
+            res.status="failed";
+            return{res};
+        }
+        const list=await List.findById(listId);
+        if(!list){
+            throw new Error("can not find list")
+        }
+        console.log(list.task)
+        let indexToremove=list.task.indexOf(taskId);
+
+        if(indexToremove===-1){
+            res.err.push("this task is Already deleted from list");
+            res.status="failed";
+            return{res};
+        }
+        list.task.splice(indexToremove, 1);
+        await list.save();
+       
+        try{
+            await Task.deleteOne({_id:taskId})
+        }catch(err){
+            console.log(err);
+        }
+        return {res};
     }
     
 

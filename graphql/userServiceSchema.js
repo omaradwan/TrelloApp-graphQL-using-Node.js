@@ -77,7 +77,6 @@ module.exports=buildSchema(`
   input InputDataTask{
     title:String!
     description:String!
-    curList:String!
     assignedUsers:[String!]
     deadline:String!
   }
@@ -126,6 +125,7 @@ module.exports=buildSchema(`
 
     addTask(boardId:String!,listId:String!,userData:InputDataTask):taskRes!
     editTask(listId:String!,taskId:String!,userData:editDataTask):taskRes!
+    deleteTask(listId:String!,taskId:String!):taskRes!
     
   }
   type rootQuery{
