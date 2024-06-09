@@ -3,6 +3,7 @@ const User=require("../models/user")
 const Board=require("../models/board")
 const List=require("../models/list")
 const Task=require("../models/task")
+const Comment=require("../models/comment")
 const validator=require("validator")
 const helpers=require("../middlewar/helper")
 const uuid=require("uuid")
@@ -680,13 +681,15 @@ module.exports={
             res.status="failed";
             return{res};
         }
+
+        // check if found list
         const list=await List.findById(listId);
         if(!list){
             throw new Error("can not find list")
         }
-        console.log(list.task)
-        let indexToremove=list.task.indexOf(taskId);
 
+        // remove task id from list
+        let indexToremove=list.task.indexOf(taskId);
         if(indexToremove===-1){
             res.err.push("this task is Already deleted from list");
             res.status="failed";
@@ -696,11 +699,49 @@ module.exports={
         await list.save();
        
         try{
+            // delete task
             await Task.deleteOne({_id:taskId})
+        }catch(er){
+            console.log(er);
+        }
+
+        return {res};
+    },
+    addComment:async function({taskId,comment},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        const userId=req.userId;
+        const task=await Task.findById(taskId,{assignedUsers:1,curList:1});
+        if(!task){
+            res.err.push("no task found")
+            res.status="Failed"
+           return {res};
+        }
+
+        // check if assignedUsers or admin where they are the ones can comment
+        let board;
+        try{
+        board=await Board.findOne({list:{$in:task.curList}});
         }catch(err){
             console.log(err);
         }
-        return {res};
+        const WS=await workSpace.findOne({boards:{$in:board._id}});
+        if(!task.assignedUsers.includes(userId)&&!WS.admins.includes(userId)){
+            res.err.push("Only admins or asiigned users to this task can comment");
+            res.status="Failed";
+            return {res}
+        }
+
+
+        const newComment=new Comment({
+            comment,
+            senderId:userId,
+            taskId
+        })
+        const savedComment=await newComment.save();
+        return{UserComment:savedComment,res}
     }
     
 

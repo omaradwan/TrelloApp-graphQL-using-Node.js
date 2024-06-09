@@ -97,6 +97,16 @@ module.exports=buildSchema(`
     deadline:String!
   }
 
+  type CommentRes{
+    UserComment:CommentInfo
+    res:Res!
+  }
+  type CommentInfo{
+    comment:String!
+    senderId:String
+    taskId:String
+  }
+
   type Res{
     err:[String]!
     status:String!
@@ -110,9 +120,11 @@ module.exports=buildSchema(`
     addAdmin(workSpaceId:String!,userTobeAdded:String!):workSpace!
     addUser(userId:String!,workSpaceId:String!):workSpace!
     removeUser(userId:String!,workSpaceId:String!):String!
+
     inviteUser(email:String!,workSpaceId:String!):String!
-    
     receiveInvitaion(userId:String!,link:String!):InviteResponse!
+
+    addComment(taskId:String!,comment:String!):CommentRes!
 
      
     createBoard(workSpaceId:String!,userData:InputDataBoard!):boardRes!
