@@ -742,6 +742,24 @@ module.exports={
         })
         const savedComment=await newComment.save();
         return{UserComment:savedComment,res}
+    },
+    getBoardsBySearch:async function({workSpaceId,name},req){
+        if(!req.isAuth){
+            throw new Error("not authinticated")
+        }
+        let res={err:[],status:"Successfull"}
+        let userId=req.userId;
+        const WS=await workSpace.findById(workSpaceId,{members:1}).populate("boards");
+        if(!WS.members.includes(userId)){
+            res.err.push("Only members in this workspace can search for board");
+            res.status="Failed"
+        }
+       // Create the regex pattern to match board names starting with the given prefix
+        const regex = new RegExp(`^${name}`, 'i');
+
+        // Filter boards by name using the regex pattern
+        const matchingBoards = WS.boards.filter(board => regex.test(board.title));
+        return {Board:matchingBoards,res}
     }
     
 

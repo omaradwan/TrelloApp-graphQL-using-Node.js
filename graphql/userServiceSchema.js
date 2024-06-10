@@ -145,6 +145,7 @@ module.exports=buildSchema(`
     getMembers(workSpaceId:String!):workSpace!
     getBoards(workSpaceId:String!):boardRes!
     getAllWorkSpaces(id:String!):[workSpace!]!
+    getBoardsBySearch(workSpaceId:String!,name:String!):boardRes!
 
   }
   schema{

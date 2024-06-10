@@ -1,5 +1,4 @@
-
-  type workSpace{
+ type workSpace{
     title:String!
     creator:String!
     members:[String!]!
@@ -142,6 +141,7 @@
     getMembers(workSpaceId:String!):workSpace!
     getBoards(workSpaceId:String!):boardRes!
     getAllWorkSpaces(id:String!):[workSpace!]!
+    getBoardsBySearch(workSpaceId:String!,name:String!):boardRes!
 
   }
   schema{
