@@ -1,5 +1,6 @@
 const nodemailer=require("nodemailer")
 const jwt=require("jsonwebtoken");
+const User=require("../models/user")
 
 module.exports.sendConfirmationEmail = async (email,content) => {
     // Create a Nodemailer transporter
@@ -55,3 +56,23 @@ module.exports.verifyToken=((req,res,next)=>{
     }
         
 })
+
+module.exports.setImage=async(req,res,next)=>{
+   
+    if(!req.isAuth){
+        throw new Error("not authinticated")
+    }
+    let userId=req.userId;
+    if(!userId){
+        throw new Error("no userId has been sent");
+    }
+    if(req.file.filename){
+        let user=await User.findById(userId);
+        user.profilePic=req.file.filename;
+
+        await user.save();
+        return res.status(200).json({msg:"user created Successfully with image upload"});
+    }
+
+
+}

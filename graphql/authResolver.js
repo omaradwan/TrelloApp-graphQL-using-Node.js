@@ -10,6 +10,7 @@ const crypto=require("crypto")
 
 module.exports={
     signup:async function({userInput},req){
+
         const{name,email,password,confirmPassword,avatar}=userInput
         const errors=[];
         if(!name||!email||!password||!confirmPassword){
