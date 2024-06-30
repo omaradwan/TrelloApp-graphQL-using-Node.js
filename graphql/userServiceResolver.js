@@ -7,7 +7,8 @@ const Comment=require("../models/comment")
 const validator=require("validator")
 const helpers=require("../middlewar/helper")
 const uuid=require("uuid")
-const list = require("../models/list")
+const socket=require("../middlewar/socket");
+
 module.exports={
 
     createWorkSpace: async function({userData},req){
@@ -574,8 +575,17 @@ module.exports={
             new:true
         }
     )
+       
+      // still need to remind users
+       if(assignedUsers.length>0){
+           let io=socket.getIO();
+           assignedUsers.forEach(id=>{
+            let socketId=io.idTosocket.get(id);
+            io.to(socketId).emit("Task Added",{task:savedTask})
+            console.log("in")
+           })
+       }
         
-       // still need to remind users
        return {Task:savedTask,res}
 
     },
@@ -614,6 +624,7 @@ module.exports={
         let updateFields = {};
         if(assignedUsers){
            updateFields.$push= { assignedUsers: assignedUsers }
+           
         }
         
         // check if this task valid to go to this list
@@ -631,7 +642,7 @@ module.exports={
         }
         if(deadline){updateFields.deadline=deadline}
         
-        console.log(updateFields)
+        // console.log(updateFields)
         let updatedTask=await Task.findOneAndUpdate(
             {
                 _id:taskId
@@ -639,6 +650,14 @@ module.exports={
             updateFields,
             {new:true}
         )
+        if(assignedUsers.length>0){
+            let io=socket.getIO();
+            assignedUsers.forEach(id=>{
+             let socketId=io.idTosocket.get(id);
+             io.to(socketId).emit("Task Modified",{UpdatedTask:updatedTask})
+            })
+        }
+         
 
         // remove the task from the old list and put it in the new list
         if(toGoList){
@@ -741,6 +760,14 @@ module.exports={
             taskId
         })
         const savedComment=await newComment.save();
+        if(task.assignedUsers.length>0){
+            let io=socket.getIO();
+            task.assignedUsers.forEach(id=>{
+             let socketId=io.idTosocket.get(id);
+             io.to(socketId).emit("New Comment",{Comment:savedComment})
+             console.log("in")
+            })
+        }
         return{UserComment:savedComment,res}
     },
     getBoardsBySearch:async function({workSpaceId,name},req){

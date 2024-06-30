@@ -73,6 +73,18 @@ module.exports.setImage=async(req,res,next)=>{
         await user.save();
         return res.status(200).json({msg:"user created Successfully with image upload"});
     }
+}
 
-
+module.exports.getID=(token)=>{
+    const SECRET_KEY = process.env.SECRET_KEY
+    try{
+        const curuser = jwt.verify(token,SECRET_KEY);
+        
+        let userId = curuser.id
+        return userId;
+    }
+    catch (err) {
+        console.log("getID function with error",err);
+        return null;
+    }
 }
