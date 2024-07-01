@@ -13,8 +13,8 @@ This is a mini Trello-like application built with GraphQL, Mongoose, and WebSock
 - **Tasks**: Lists can contain multiple tasks.
 
 - ## Use Case diagram
-- ![image](https://github.com/omaradwan/TrelloApp-graphQL-using-Node.js/assets/103865034/e04a89b4-bafe-4f84-aefc-7f84a146c0c3)
-- ![image](https://github.com/omaradwan/TrelloApp-graphQL-using-Node.js/assets/103865034/fb06a386-187f-4a5c-aadf-fda26e20d526)
+![image](https://github.com/omaradwan/TrelloApp-graphQL-using-Node.js/assets/103865034/f47dcbbd-4015-45c3-bdba-0ce21d270449)
+
 
 
 - ## UML diagram
