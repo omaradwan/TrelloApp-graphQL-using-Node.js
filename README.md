@@ -20,9 +20,10 @@ Mini Trello is an innovative task management platform designed to streamline tas
 
 
 - ## UML diagram
-- Indexed field image
-- Unique field image
-- Required field image
+- Indexed field ![image](https://github.com/user-attachments/assets/c70ccca3-b0f9-4f08-b2a8-c62c6f3115c3)
+- Unique field ![image](https://github.com/user-attachments/assets/bc4e155e-58ca-48e6-8ddd-9f84988d847e)
+- Required field ![image](https://github.com/user-attachments/assets/c2712750-b943-4064-af6a-bddd2d44d98f)
+
 -![image](https://github.com/omaradwan/TrelloApp-graphQL-using-Node.js/assets/103865034/90c915e9-21fc-40c1-a5b4-bd68b42b8873)
 
 
