@@ -1,6 +1,8 @@
 # Mini Trello Application
 
-This is a mini Trello-like application built with GraphQL, Mongoose, and WebSockets using the socket.io package. Users can create workspaces, each of which can contain boards, lists, and tasks.
+Mini Trello is an innovative task management platform designed to streamline task organization within multiple workspaces. Within the application, admins have the authority to create and oversee workspaces, each housing several boards dedicated to task tracking. The architecture of the project leverages GraphQL to facilitate API interactions, Mongoose for managing database operations, and WebSockets to enable real-time updates and notifications.
+
+
 
 ## Features
 
@@ -18,6 +20,9 @@ This is a mini Trello-like application built with GraphQL, Mongoose, and WebSock
 
 
 - ## UML diagram
+- Indexed field image
+- Unique field image
+- Required field image
 -![image](https://github.com/omaradwan/TrelloApp-graphQL-using-Node.js/assets/103865034/90c915e9-21fc-40c1-a5b4-bd68b42b8873)
 
 
